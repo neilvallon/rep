@@ -5,30 +5,39 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 )
 
 func main() {
 	log := log.New(os.Stderr, "", 0)
 
-	if len(os.Args) < 2 {
-		log.Fatal("rep: number of repeats unspecified")
+	args := os.Args[1:]
+	if len(args) < 1 {
+		log.Fatal("rep: not enough arguments provided")
 	}
 
-	n, err := strconv.Atoi(os.Args[1])
-	if err != nil {
-		log.Fatalf("rep: %q is not a number", os.Args[1])
+	var bounded bool
+	n, err := strconv.Atoi(args[0])
+	if err == nil {
+		bounded = true
+		args = args[1:]
 	}
 
-	if len(os.Args) < 3 {
+	if len(args) < 1 {
 		log.Fatal("rep: no command specified")
 	}
 
-	if _, err := exec.LookPath(os.Args[2]); err != nil {
+	if _, err := exec.LookPath(args[0]); err != nil {
 		log.Fatal("rep: command not found")
 	}
 
-	for i := 0; i < n; i++ {
-		cmd := exec.Command(os.Args[2], os.Args[3:]...)
+	if !bounded {
+		log.Println("rep: repeating forever")
+		time.Sleep(3 * time.Second)
+	}
+
+	for i := 0; !bounded || i < n; i++ {
+		cmd := exec.Command(args[0], args[1:]...)
 
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
